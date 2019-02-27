@@ -2,7 +2,10 @@ const electron = require('electron');
 const url = require('url');
 const path = require('path');
 
-const {app, BrowserWindow, Menu} = electron;
+const {app, BrowserWindow, Menu, ipcMain} = electron;
+
+//Set ENV
+process.env.NODE_ENV = 'production';
 
 let mainWindow;
 let addWindow;
@@ -38,8 +41,16 @@ function createAddWindow(){
     slashes: true
   }));
   //Garbage collection
-  addWindow = null;
+  addWindow.on('close',function(){
+    addWindow = null;
+  });
 }
+
+//Catch item:add
+ipcMain.on('item:add',function(e,item){
+  mainWindow.webContents.send('item:add',item);
+  addWindow.close();
+})
 
 //Menu Template
 const mainMenuTemplate = [
@@ -53,7 +64,10 @@ const mainMenuTemplate = [
         }
       },
       {
-        label:'Clear Items'
+        label:'Clear Items',
+        click(){
+          mainWindow.webContents.send('item:clear');
+        }
       },
       {
         label:'Quit',
